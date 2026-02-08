@@ -2,243 +2,143 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UMADCIN - Relatório Digital</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMADCIN - Relatório</title>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --azul: #1a3a5a; --fundo: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--fundo); padding: 10px; margin: 0; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-top: 8px solid var(--azul); }
-        header { text-align: center; border-bottom: 2px solid var(--azul); margin-bottom: 20px; }
-        .info-topo { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .field { display: flex; flex-direction: column; font-weight: bold; color: var(--azul); font-size: 14px; }
-        input { padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; font-size: 16px; }
-        .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .tabela-dados th { background: var(--azul); color: white; padding: 10px; text-align: left; }
-        .tabela-dados td { padding: 10px; border-bottom: 1px solid #eee; }
-        .tabela-dados input { width: 70px; text-align: center; border: 1px solid #eee; font-weight: bold; padding: 5px; }
-        .assinaturas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; }
-        .sig-box { border: 1px solid #ddd; padding: 10px; text-align: center; border-radius: 5px; background: #fafafa; }
-        canvas { width: 100%; height: 150px; border: 1px dashed #ccc; background: white; touch-action: none; }
-        .timestamp { font-size: 10px; color: #d9534f; margin-top: 5px; font-weight: bold; min-height: 14px; }
-        .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 18px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 20px; }
-        .btn-limpar { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 3px; font-size: 12px; margin-top: 5px; cursor: pointer; }
-        #view-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--azul); color: white; z-index: 9999; justify-content: center; align-items: center; text-align: center; flex-direction: column; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        :root { --azul: #1a3a5a; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 10px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; border-top: 8px solid var(--azul); }
+        canvas { width: 100%; height: 150px; border: 1px dashed #ccc; background: white; }
+        .timestamp { font-size: 10px; color: #d9534f; font-weight: bold; margin-top: 5px; }
+        .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        #view-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: var(--azul); color:white; flex-direction:column; align-items:center; justify-content:center; z-index:99; }
     </style>
 </head>
 <body>
 
-<div id="view-overlay">
-    <h2 style="margin-bottom: 10px;">UMADCIN</h2>
-    <p id="status-text">Gerando PDF oficial...</p>
-    <div id="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin-top: 20px;"></div>
-</div>
+<div id="view-overlay"><h2>UMADCIN</h2><p>Gerando PDF oficial...</p></div>
 
 <div class="container" id="main-content">
-    <header><h1>UMADCIN</h1><p>RELATÓRIO MENSAL</p></header>
-
-    <div class="info-topo">
-        <div class="field">DATA: <input type="date" id="data_form"></div>
-        <div class="field">GRUPO: <input type="text" id="grupo"></div>
-        <div class="field">CONGREGAÇÃO: <input type="text" id="congregacao"></div>
-        <div class="field">MÊS: <input type="text" id="mes"></div>
+    <h2 style="text-align:center; color:var(--azul);">UMADCIN - RELATÓRIO</h2>
+    <div style="display:grid; gap:10px; margin-bottom:20px;">
+        <input type="date" id="data_form">
+        <input type="text" id="congregacao" placeholder="Congregação">
+        <input type="text" id="mes" placeholder="Mês Referência">
     </div>
 
-    <table class="tabela-dados">
-        <thead><tr><th>DESCRIÇÃO</th><th style="text-align:right">QTD</th></tr></thead>
-        <tbody id="corpo-tabela"></tbody>
-    </table>
+    <table id="tabela" style="width:100%; border-collapse:collapse; margin-bottom:20px;"></table>
 
-    <div class="assinaturas-grid">
-        <div class="sig-box">
-            <label><strong>SECRETÁRIA LOCAL</strong></label>
-            <canvas id="pad-sec"></canvas>
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+        <div style="text-align:center;">
+            <label>SEC. LOCAL</label><canvas id="pad-sec"></canvas>
             <div id="ts-sec" class="timestamp"></div>
-            <button class="btn-limpar" onclick="limparPad('sec')">Limpar</button>
         </div>
-        <div class="sig-box">
-            <label><strong>ASSISTENTE MOCIDADE</strong></label>
-            <canvas id="pad-ast"></canvas>
+        <div style="text-align:center;">
+            <label>ASSISTENTE</label><canvas id="pad-ast"></canvas>
             <div id="ts-ast" class="timestamp"></div>
-            <button class="btn-limpar" onclick="limparPad('ast')">Limpar</button>
         </div>
-        <div class="sig-box">
-            <label><strong>DIRIGENTE CONG.</strong></label>
-            <canvas id="pad-dir"></canvas>
+        <div style="text-align:center;">
+            <label>DIRIGENTE</label><canvas id="pad-dir"></canvas>
             <div id="ts-dir" class="timestamp"></div>
-            <button class="btn-limpar" onclick="limparPad('dir')">Limpar</button>
         </div>
     </div>
-
-    <button class="btn-gerar" id="btnFinalizar" onclick="finalizarTudo()">GERAR PDF E SALVAR RELATÓRIO</button>
+    <button class="btn-gerar" onclick="finalizarTudo()">GERAR E ENVIAR</button>
 </div>
 
 <script>
-    const labels = ["DECISÕES", "RECONCILIAÇÕES", "CULTOS DE RUA", "COJ", "VISITA (NUCLEOS)", "BATISMO ESP. SANTO", "Nº JOVENS EBD", "Nº TRAB. LOCAL", "Nº JOVENS"];
-    const tbody = document.getElementById('corpo-tabela');
-    labels.forEach((l, i) => { 
-        tbody.innerHTML += `<tr><td>${l}</td><td style="text-align:right"><input type="number" id="d${i}" value="0"></td></tr>`; 
+    const labels = ["DECISÕES", "RECONCILIAÇÕES", "CULTOS DE RUA", "COJ", "VISITA", "BATISMO", "EBD", "TRAB. LOCAL", "JOVENS"];
+    const pads = { sec: new SignaturePad(document.getElementById('pad-sec')), ast: new SignaturePad(document.getElementById('pad-ast')), dir: new SignaturePad(document.getElementById('pad-dir')) };
+    
+    labels.forEach((l, i) => {
+        document.getElementById('tabela').innerHTML += `<tr><td style="padding:5px; border-bottom:1px solid #eee">${l}</td><td><input type="number" id="d${i}" value="0" style="width:50px"></td></tr>`;
     });
-
-    const pads = {
-        sec: new SignaturePad(document.getElementById('pad-sec')),
-        ast: new SignaturePad(document.getElementById('pad-ast')),
-        dir: new SignaturePad(document.getElementById('pad-dir'))
-    };
-
-    function resizeCanvas() {
-        Object.values(pads).forEach(p => {
-            const canvas = p.canvas;
-            if (canvas.offsetParent === null) return;
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            if (canvas.width !== canvas.offsetWidth * ratio) {
-                const data = p.toData();
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                canvas.getContext("2d").scale(ratio, ratio);
-                p.fromData(data);
-            }
-        });
-    }
-
-    window.addEventListener("resize", resizeCanvas);
-    setTimeout(resizeCanvas, 500);
 
     function registrarHora(id) {
-        const ts = document.getElementById('ts-' + id);
-        if(ts.innerText === "") ts.innerText = "Assinado em: " + new Date().toLocaleString('pt-BR');
+        document.getElementById('ts-' + id).innerText = "Assinado em: " + new Date().toLocaleString('pt-BR');
     }
-
-    Object.keys(pads).forEach(id => {
-        const c = document.getElementById('pad-' + id);
-        c.addEventListener('touchend', () => registrarHora(id));
-        c.addEventListener('mouseup', () => registrarHora(id));
+    ['sec', 'ast', 'dir'].forEach(id => {
+        document.getElementById('pad-'+id).addEventListener('touchend', () => registrarHora(id));
+        document.getElementById('pad-'+id).addEventListener('mouseup', () => registrarHora(id));
     });
 
-    function limparPad(id) {
-        pads[id].clear();
-        document.getElementById('ts-' + id).innerText = "";
-    }
-
-    // Lógica para o Secretário Geral (Link da Planilha)
-    window.onload = async () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('view')) {
-            document.getElementById('main-content').style.display = 'none';
-            document.getElementById('view-overlay').style.display = 'flex';
-            await gerarPDFAutomatico(urlParams);
-        }
-    };
-
-    async function gerarPDFAutomatico(params) {
+    async function criarPDF(dados) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
-        doc.setFont("helvetica", "bold");
-        doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, { align: "center" });
-        doc.setFontSize(10);
-        doc.text(`CONGREGAÇÃO: ${(params.get('cong') || "").toUpperCase()}`, 20, 35);
-        doc.text(`MÊS: ${(params.get('mes') || "").toUpperCase()}`, 20, 42);
+        doc.setFontSize(16); doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, {align:"center"});
+        doc.setFontSize(10); doc.text(`CONGREGAÇÃO: ${dados.cong.toUpperCase()}`, 20, 35);
+        doc.text(`MÊS: ${dados.mes.toUpperCase()}`, 20, 42);
         
         let y = 60;
-        const vals = (params.get('vals') || "").split(',');
         labels.forEach((l, i) => {
-            doc.text(l, 25, y);
-            doc.text(vals[i] || "0", 175, y);
-            doc.line(20, y+2, 190, y+2);
-            y += 10;
+            doc.text(l, 25, y); doc.text(String(dados.vals[i]), 170, y);
+            doc.line(20, y+2, 190, y+2); y += 10;
         });
 
-        const yAss = 210;
-        const imgs = [params.get('imgSec'), params.get('imgAst'), params.get('imgDir')];
-        const cargos = ["SECRETÁRIA LOCAL", "ASSISTENTE MOCIDADE", "DIRIGENTE CONG."];
-        const times = [params.get('tSec'), params.get('tAst'), params.get('tDir')];
+        // Adiciona assinaturas e as datas (identificações)
         const xPos = [20, 85, 150];
+        const tags = ["SEC. LOCAL", "ASSISTENTE", "DIRIGENTE"];
+        const times = [dados.tSec, dados.tAst, dados.tDir];
+        const imgs = [dados.imgSec, dados.imgAst, dados.imgDir];
 
         for(let i=0; i<3; i++) {
-            const urlImg = imgs[i];
-            if(urlImg && urlImg.startsWith("http")) {
+            if(imgs[i] && imgs[i].startsWith("http")) {
                 try {
-                    const img = await carregarImagem(urlImg);
-                    doc.addImage(img, 'PNG', xPos[i], yAss, 40, 15);
-                } catch(e) { console.warn("Assinatura ausente no Drive."); }
+                    const img = await new Promise((res, rej) => {
+                        const im = new Image(); im.crossOrigin="anonymous"; im.onload=()=>res(im); im.onerror=rej; im.src=imgs[i];
+                    });
+                    doc.addImage(img, 'PNG', xPos[i], 210, 40, 15);
+                } catch(e) {}
+            } else if (imgs[i] && imgs[i].startsWith("data:")) {
+                doc.addImage(imgs[i], 'PNG', xPos[i], 210, 40, 15);
             }
             doc.setFontSize(8);
-            doc.text(cargos[i], xPos[i] + 20, yAss + 20, { align: "center" });
-            doc.text(times[i] || "", xPos[i] + 20, yAss + 24, { align: "center" });
+            doc.text(tags[i], xPos[i]+20, 230, {align:"center"});
+            doc.text(times[i] || "", xPos[i]+20, 235, {align:"center"});
         }
-
-        doc.save(`Relatorio_${params.get('cong') || 'UMADCIN'}.pdf`);
-        document.getElementById('status-text').innerText = "PDF gerado com sucesso! Verifique sua pasta de downloads.";
-        document.getElementById('spinner').style.display = 'none';
+        return doc;
     }
 
-    function carregarImagem(url) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => resolve(img);
-            img.onerror = () => reject();
-            img.src = url;
-        });
-    }
-
-    // Lógica para o Secretário Local (Envio)
     async function finalizarTudo() {
-        const btn = document.getElementById('btnFinalizar');
-        btn.disabled = true; btn.innerText = "ENVIANDO...";
-
-        // Primeiro gera o PDF local
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setFont("helvetica", "bold");
-        doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, { align: "center" });
-        doc.setFontSize(10);
-        doc.text(`CONGREGAÇÃO: ${document.getElementById('congregacao').value.toUpperCase()}`, 20, 35);
-        let y = 60;
-        labels.forEach((l, i) => {
-            doc.text(l, 25, y);
-            doc.text(document.getElementById('d'+i).value, 175, y);
-            doc.line(20, y+2, 190, y+2);
-            y += 10;
-        });
-        const yAss = 210;
-        if (!pads.sec.isEmpty()) doc.addImage(pads.sec.toDataURL(), 'PNG', 20, yAss, 40, 15);
-        if (!pads.ast.isEmpty()) doc.addImage(pads.ast.toDataURL(), 'PNG', 85, yAss, 40, 15);
-        if (!pads.dir.isEmpty()) doc.addImage(pads.dir.toDataURL(), 'PNG', 150, yAss, 40, 15);
-        doc.save(`Relatorio_UMADCIN.pdf`);
-
-        const urlScript = "https://script.google.com/macros/s/AKfycbyzp-Ycu3w3WiwBMMH72aHvFybxIMiYpAs644rwj-wB2Ayps7wvMA5woZxCV4RDscpG/exec";
-        
         const dados = {
-            dataEnvio: document.getElementById('data_form').value,
-            grupo: document.getElementById('grupo').value,
             cong: document.getElementById('congregacao').value,
             mes: document.getElementById('mes').value,
-            valores: labels.map((_, i) => document.getElementById('d'+i).value),
-            times: {
-                sec: document.getElementById('ts-sec').innerText,
-                ast: document.getElementById('ts-ast').innerText,
-                dir: document.getElementById('ts-dir').innerText
-            },
-            sigs: {
-                sec: pads.sec.isEmpty() ? "" : pads.sec.toDataURL(),
-                ast: pads.ast.isEmpty() ? "" : pads.ast.toDataURL(),
-                dir: pads.dir.isEmpty() ? "" : pads.dir.toDataURL()
-            }
+            vals: labels.map((_, i) => document.getElementById('d'+i).value),
+            tSec: document.getElementById('ts-sec').innerText,
+            tAst: document.getElementById('ts-ast').innerText,
+            tDir: document.getElementById('ts-dir').innerText,
+            imgSec: pads.sec.isEmpty() ? "" : pads.sec.toDataURL(),
+            imgAst: pads.ast.isEmpty() ? "" : pads.ast.toDataURL(),
+            imgDir: pads.dir.isEmpty() ? "" : pads.dir.toDataURL()
         };
-
-        try {
-            await fetch(urlScript, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dados) });
-            alert("Sucesso! Relatório enviado para o Secretário Geral.");
-        } catch (e) {
-            alert("O PDF foi gerado, mas houve um erro ao salvar na planilha.");
-        } finally {
-            btn.disabled = false; btn.innerText = "GERAR PDF E SALVAR RELATÓRIO";
-        }
+        const doc = await criarPDF(dados);
+        doc.save("Relatorio.pdf");
+        
+        fetch("https://script.google.com/macros/s/AKfycbyzp-Ycu3w3WiwBMMH72aHvFybxIMiYpAs644rwj-wB2Ayps7wvMA5woZxCV4RDscpG/exec", {
+            method: 'POST', mode: 'no-cors', body: JSON.stringify({
+                dataEnvio: document.getElementById('data_form').value,
+                cong: dados.cong, mes: dados.mes, valores: dados.vals,
+                times: {sec: dados.tSec, ast: dados.tAst, dir: dados.tDir},
+                sigs: {sec: dados.imgSec, ast: dados.imgAst, dir: dados.imgDir}
+            })
+        });
+        alert("Enviado com sucesso!");
     }
+
+    window.onload = async () => {
+        const p = new URLSearchParams(window.location.search);
+        if(p.has('view')) {
+            document.getElementById('main-content').style.display = 'none';
+            document.getElementById('view-overlay').style.display = 'flex';
+            const doc = await criarPDF({
+                cong: p.get('cong'), mes: p.get('mes'), vals: p.get('vals').split(','),
+                tSec: p.get('tSec'), tAst: p.get('tAst'), tDir: p.get('tDir'),
+                imgSec: p.get('imgSec'), imgAst: p.get('imgAst'), imgDir: p.get('imgDir')
+            });
+            doc.save("Relatorio_Oficial.pdf");
+        }
+    };
 </script>
 </body>
 </html>
