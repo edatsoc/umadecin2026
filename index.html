@@ -31,13 +31,13 @@
 <body>
 
 <div id="view-overlay">
-    <h2>UMADCIN</h2>
+    <h2 style="margin-bottom: 10px;">UMADCIN</h2>
     <p id="status-text">Gerando PDF oficial do relatório...</p>
-    <div id="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite;"></div>
+    <div id="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin-top: 20px;"></div>
 </div>
 
 <div class="container" id="main-content">
-    <header><h1>UMADCIN</h1><p>RELATÓRIO MENSAL</p></header>
+    <header><h1>UMADCIN</h1><p>RELATÓRIO MENSAL 4.0</p></header>
 
     <div class="info-topo">
         <div class="field">DATA: <input type="date" id="data_form"></div>
@@ -139,7 +139,7 @@
         doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, { align: "center" });
         doc.setFontSize(10);
         doc.text(`CONGREGAÇÃO: ${params.get('cong').toUpperCase()}`, 20, 35);
-        doc.text(`MÊS: ${params.get('mes')}`, 20, 42);
+        doc.text(`MÊS: ${params.get('mes').toUpperCase()}`, 20, 42);
         
         let y = 60;
         const vals = params.get('vals').split(',');
@@ -157,11 +157,12 @@
         const xPos = [20, 85, 150];
 
         for(let i=0; i<3; i++) {
-            if(imgs[i] && imgs[i] !== "Não assinado") {
+            const urlImg = imgs[i];
+            if(urlImg && urlImg.startsWith("http")) {
                 try {
-                    const img = await carregarImagem(imgs[i]);
+                    const img = await carregarImagem(urlImg);
                     doc.addImage(img, 'PNG', xPos[i], yAss, 40, 15);
-                } catch(e) { console.log("Erro imagem " + i); }
+                } catch(e) { console.warn("Erro ao carregar assinatura " + i); }
             }
             doc.setFontSize(8);
             doc.text(cargos[i], xPos[i] + 20, yAss + 20, { align: "center" });
@@ -169,7 +170,7 @@
         }
 
         doc.save(`Relatorio_${params.get('cong')}.pdf`);
-        document.getElementById('status-text').innerText = "Download concluído! Verifique seus arquivos.";
+        document.getElementById('status-text').innerText = "PDF Gerado com sucesso!";
         document.getElementById('spinner').style.display = 'none';
     }
 
@@ -178,7 +179,7 @@
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.onload = () => resolve(img);
-            img.onerror = reject;
+            img.onerror = () => reject();
             img.src = url;
         });
     }
@@ -228,9 +229,9 @@
 
         try {
             await fetch(urlScript, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dados) });
-            alert("Sucesso! Relatório enviado.");
+            alert("Sucesso! Relatório enviado para a planilha.");
         } catch (e) {
-            alert("Erro ao salvar.");
+            alert("Erro ao salvar dados.");
         } finally {
             btn.disabled = false; btn.innerText = "GERAR PDF E SALVAR RELATÓRIO";
         }
