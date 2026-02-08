@@ -3,39 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UMADCIN - Sistema de Relatórios</title>
+    <title>UMADCIN - Relatório Digital</title>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --azul: #1a3a5a; --fundo: #e9ecef; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--fundo); margin: 0; padding: 10px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; border-top: 10px solid var(--azul); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        header { text-align: center; border-bottom: 2px solid var(--azul); margin-bottom: 20px; padding-bottom: 10px; }
-        .info-topo { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-        .field { flex: 1; min-width: 200px; display: flex; flex-direction: column; font-weight: bold; color: var(--azul); }
-        input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px; font-size: 16px; }
-        .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+        :root { --azul: #1a3a5a; --fundo: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--fundo); padding: 10px; margin: 0; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-top: 8px solid var(--azul); }
+        header { text-align: center; border-bottom: 2px solid var(--azul); margin-bottom: 20px; }
+        .info-topo { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .field { display: flex; flex-direction: column; font-weight: bold; color: var(--azul); font-size: 14px; }
+        input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; }
+        .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         .tabela-dados th { background: var(--azul); color: white; padding: 10px; text-align: left; }
-        .tabela-dados td { padding: 8px; border-bottom: 1px solid #eee; }
-        .tabela-dados input { width: 80px; float: right; text-align: center; font-weight: bold; border: 1px solid #eee; }
-        .assinaturas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 15px; }
-        .sig-box { border: 1px solid #ddd; padding: 10px; background: #fdfdfd; border-radius: 5px; text-align: center; }
-        canvas { width: 100%; height: 120px; border: 1px dashed #aaa; background: white; touch-action: none; }
-        .timestamp { font-size: 10px; color: #d9534f; height: 15px; margin-top: 5px; font-weight: bold; }
-        .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 18px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 20px; }
-        .btn-limpar { background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; margin-top: 5px; cursor: pointer; }
-        /* Esconde botões no modo de visualização do Secretário Geral */
-        .modo-view .btn-limpar, .modo-view .btn-gerar { display: none; }
-        .modo-view input { pointer-events: none; border: none; background: transparent; }
+        .tabela-dados td { padding: 10px; border-bottom: 1px solid #eee; }
+        .tabela-dados input { width: 60px; text-align: center; border: 1px solid #eee; font-weight: bold; }
+        .assinaturas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; }
+        .sig-box { border: 1px solid #ddd; padding: 10px; text-align: center; border-radius: 5px; background: #fafafa; }
+        canvas, .img-assinatura { width: 100%; height: 100px; border: 1px dashed #ccc; background: white; object-fit: contain; }
+        .timestamp { font-size: 10px; color: #d9534f; margin-top: 5px; font-weight: bold; min-height: 14px; }
+        .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 20px; }
+        .btn-limpar { background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 11px; margin-top: 5px; cursor: pointer; }
+        .modo-view .btn-gerar, .modo-view .btn-limpar, .modo-view canvas { display: none; }
+        .img-assinatura { display: none; }
+        .modo-view .img-assinatura { display: block; }
     </style>
 </head>
-<body>
+<body class="loading">
 
-<div class="container" id="app">
-    <header>
-        <h1>UMADCIN</h1>
-        <p><strong>RELATÓRIO MENSAL DE ATIVIDADES</strong></p>
-    </header>
+<div class="container">
+    <header><h1>UMADCIN</h1><p>RELATÓRIO MENSAL</p></header>
 
     <div class="info-topo">
         <div class="field">DATA: <input type="text" id="data_form"></div>
@@ -45,7 +42,7 @@
     </div>
 
     <table class="tabela-dados">
-        <thead><tr><th>DADOS</th><th>QTD</th></tr></thead>
+        <thead><tr><th>DESCRIÇÃO</th><th style="text-align:right">QTD</th></tr></thead>
         <tbody id="corpo-tabela"></tbody>
     </table>
 
@@ -53,18 +50,21 @@
         <div class="sig-box">
             <label><strong>SECRETÁRIA LOCAL</strong></label>
             <canvas id="pad-sec"></canvas>
+            <img id="img-sec" class="img-assinatura">
             <div id="ts-sec" class="timestamp"></div>
             <button class="btn-limpar" onclick="pads.sec.clear(); document.getElementById('ts-sec').innerText=''">Limpar</button>
         </div>
         <div class="sig-box">
             <label><strong>ASSISTENTE MOCIDADE</strong></label>
             <canvas id="pad-ast"></canvas>
+            <img id="img-ast" class="img-assinatura">
             <div id="ts-ast" class="timestamp"></div>
             <button class="btn-limpar" onclick="pads.ast.clear(); document.getElementById('ts-ast').innerText=''">Limpar</button>
         </div>
         <div class="sig-box">
             <label><strong>DIRIGENTE CONG.</strong></label>
             <canvas id="pad-dir"></canvas>
+            <img id="img-dir" class="img-assinatura">
             <div id="ts-dir" class="timestamp"></div>
             <button class="btn-limpar" onclick="pads.dir.clear(); document.getElementById('ts-dir').innerText=''">Limpar</button>
         </div>
@@ -77,7 +77,7 @@
     const labels = ["DECISÕES", "RECONCILIAÇÕES", "CULTOS DE RUA", "COJ", "VISITA (NUCLEOS)", "BATISMO ESP. SANTO", "Nº JOVENS EBD", "Nº TRAB. LOCAL", "Nº JOVENS"];
     const tbody = document.getElementById('corpo-tabela');
     labels.forEach((l, i) => { 
-        tbody.innerHTML += `<tr><td>${l}</td><td><input type="number" id="d${i}" value="0"></td></tr>`; 
+        tbody.innerHTML += `<tr><td>${l}</td><td style="text-align:right"><input type="number" id="d${i}" value="0"></td></tr>`; 
     });
 
     const pads = {
@@ -88,9 +88,7 @@
 
     function registrarHora(id) {
         const ts = document.getElementById('ts-' + id);
-        if(ts.innerText === "") {
-            ts.innerText = "Assinado em: " + new Date().toLocaleString('pt-BR');
-        }
+        if(ts.innerText === "") ts.innerText = "Assinado em: " + new Date().toLocaleString('pt-BR');
     }
 
     Object.keys(pads).forEach(id => {
@@ -99,7 +97,7 @@
         c.addEventListener('mouseup', () => registrarHora(id));
     });
 
-    // LÓGICA DE VISUALIZAÇÃO (Para o Secretário Geral)
+    // MODO VISUALIZAÇÃO
     window.onload = () => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('view')) {
@@ -109,19 +107,18 @@
             document.getElementById('congregacao').value = urlParams.get('cong');
             document.getElementById('mes').value = urlParams.get('mes');
             
-            const vals = urlParams.get('vals').split(',');
-            vals.forEach((v, i) => { if(document.getElementById('d'+i)) document.getElementById('d'+i).value = v; });
+            urlParams.get('vals').split(',').forEach((v, i) => { if(document.getElementById('d'+i)) document.getElementById('d'+i).value = v; });
             
             document.getElementById('ts-sec').innerText = urlParams.get('tSec');
             document.getElementById('ts-ast').innerText = urlParams.get('tAst');
             document.getElementById('ts-dir').innerText = urlParams.get('tDir');
 
-            // Carrega os desenhos das assinaturas
-            if(urlParams.get('sSec')) pads.sec.fromDataURL(urlParams.get('sSec'));
-            if(urlParams.get('sAst')) pads.ast.fromDataURL(urlParams.get('sAst'));
-            if(urlParams.get('sDir')) pads.dir.fromDataURL(urlParams.get('sDir'));
+            // Carrega as imagens do Drive nos quadros de assinatura
+            document.getElementById('img-sec').src = urlParams.get('imgSec');
+            document.getElementById('img-ast').src = urlParams.get('imgAst');
+            document.getElementById('img-dir').src = urlParams.get('imgDir');
             
-            pads.sec.off(); pads.ast.off(); pads.dir.off(); // Bloqueia edição
+            alert("Visualizando comprovante oficial.");
         }
     };
 
@@ -129,45 +126,24 @@
         const btn = document.getElementById('btnFinalizar');
         btn.disabled = true; btn.innerText = "ENVIANDO...";
 
+        // PDF Simples (Planilhado)
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
-        // Estilo PDF Planilhado
         doc.setFont("helvetica", "bold");
         doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, { align: "center" });
         doc.setFontSize(10);
-        doc.text(`CONGREGAÇÃO: ${document.getElementById('congregacao').value.toUpperCase()}`, 20, 35);
-        
-        let y = 60;
+        doc.text(`IGREJA: ${document.getElementById('congregacao').value}`, 20, 35);
+        let y = 50;
         labels.forEach((l, i) => {
             doc.text(l, 25, y);
-            doc.text(document.getElementById('d'+i).value, 175, y);
+            doc.text(document.getElementById('d'+i).value, 170, y);
             doc.line(20, y+2, 190, y+2);
             y += 10;
         });
+        doc.save("Relatorio.pdf");
 
-        // Assinaturas no PDF
-        const yAss = 200;
-        if(!pads.sec.isEmpty()) {
-            doc.addImage(pads.sec.toDataURL(), 'PNG', 20, yAss, 40, 15);
-            doc.text("SECRETÁRIA LOCAL", 40, yAss+20, {align:"center"});
-            doc.text(document.getElementById('ts-sec').innerText, 40, yAss+24, {align:"center"});
-        }
-        if(!pads.ast.isEmpty()) {
-            doc.addImage(pads.ast.toDataURL(), 'PNG', 85, yAss, 40, 15);
-            doc.text("ASSISTENTE MOCIDADE", 105, yAss+20, {align:"center"});
-            doc.text(document.getElementById('ts-ast').innerText, 105, yAss+24, {align:"center"});
-        }
-        if(!pads.dir.isEmpty()) {
-            doc.addImage(pads.dir.toDataURL(), 'PNG', 150, yAss, 40, 15);
-            doc.text("DIRIGENTE CONG.", 170, yAss+20, {align:"center"});
-            doc.text(document.getElementById('ts-dir').innerText, 170, yAss+24, {align:"center"});
-        }
-
-        doc.save("Relatorio_UMADCIN.pdf");
-
-        // Envio para a Planilha
-        const urlScript = "https://script.google.com/macros/s/AKfycbyzp-Ycu3w3WiwBMMH72aHvFybxIMiYpAs644rwj-wB2Ayps7wvMA5woZxCV4RDscpG/exec";
+        // Envio para o Script
+        const urlScript = "COLE_AQUI_A_URL_DA_SUA_IMPLANTAÇÃO";
         const dados = {
             dataEnvio: document.getElementById('data_form').value,
             grupo: document.getElementById('grupo').value,
@@ -180,20 +156,17 @@
                 dir: document.getElementById('ts-dir').innerText
             },
             sigs: {
-                sec: pads.sec.isEmpty() ? "" : pads.sec.toDataURL(),
-                ast: pads.ast.isEmpty() ? "" : pads.ast.toDataURL(),
-                dir: pads.dir.isEmpty() ? "" : pads.dir.toDataURL()
+                sec: pads.sec.toDataURL(),
+                ast: pads.ast.toDataURL(),
+                dir: pads.dir.toDataURL()
             }
         };
 
         try {
             await fetch(urlScript, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dados) });
-            alert("Sucesso! Relatório salvo e PDF gerado.");
-        } catch (e) {
-            alert("Erro ao salvar dados.");
-        } finally {
-            btn.disabled = false; btn.innerText = "GERAR PDF E SALVAR RELATÓRIO";
-        }
+            alert("Enviado com sucesso!");
+        } catch (e) { alert("Erro ao enviar."); }
+        finally { btn.disabled = false; btn.innerText = "GERAR PDF E SALVAR"; }
     }
 </script>
 </body>
