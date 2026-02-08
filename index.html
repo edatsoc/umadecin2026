@@ -32,12 +32,12 @@
 
 <div id="view-overlay">
     <h2 style="margin-bottom: 10px;">UMADCIN</h2>
-    <p id="status-text">Gerando PDF oficial do relatório...</p>
+    <p id="status-text">Gerando PDF oficial...</p>
     <div id="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin-top: 20px;"></div>
 </div>
 
 <div class="container" id="main-content">
-    <header><h1>UMADCIN</h1><p>RELATÓRIO MENSAL 4.0</p></header>
+    <header><h1>UMADCIN</h1><p>RELATÓRIO MENSAL</p></header>
 
     <div class="info-topo">
         <div class="field">DATA: <input type="date" id="data_form"></div>
@@ -122,6 +122,7 @@
         document.getElementById('ts-' + id).innerText = "";
     }
 
+    // Lógica para o Secretário Geral (Link da Planilha)
     window.onload = async () => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('view')) {
@@ -138,11 +139,11 @@
         doc.setFont("helvetica", "bold");
         doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, { align: "center" });
         doc.setFontSize(10);
-        doc.text(`CONGREGAÇÃO: ${params.get('cong').toUpperCase()}`, 20, 35);
-        doc.text(`MÊS: ${params.get('mes').toUpperCase()}`, 20, 42);
+        doc.text(`CONGREGAÇÃO: ${(params.get('cong') || "").toUpperCase()}`, 20, 35);
+        doc.text(`MÊS: ${(params.get('mes') || "").toUpperCase()}`, 20, 42);
         
         let y = 60;
-        const vals = params.get('vals').split(',');
+        const vals = (params.get('vals') || "").split(',');
         labels.forEach((l, i) => {
             doc.text(l, 25, y);
             doc.text(vals[i] || "0", 175, y);
@@ -162,15 +163,15 @@
                 try {
                     const img = await carregarImagem(urlImg);
                     doc.addImage(img, 'PNG', xPos[i], yAss, 40, 15);
-                } catch(e) { console.warn("Erro ao carregar assinatura " + i); }
+                } catch(e) { console.warn("Assinatura ausente no Drive."); }
             }
             doc.setFontSize(8);
             doc.text(cargos[i], xPos[i] + 20, yAss + 20, { align: "center" });
             doc.text(times[i] || "", xPos[i] + 20, yAss + 24, { align: "center" });
         }
 
-        doc.save(`Relatorio_${params.get('cong')}.pdf`);
-        document.getElementById('status-text').innerText = "PDF Gerado com sucesso!";
+        doc.save(`Relatorio_${params.get('cong') || 'UMADCIN'}.pdf`);
+        document.getElementById('status-text').innerText = "PDF gerado com sucesso! Verifique sua pasta de downloads.";
         document.getElementById('spinner').style.display = 'none';
     }
 
@@ -184,10 +185,12 @@
         });
     }
 
+    // Lógica para o Secretário Local (Envio)
     async function finalizarTudo() {
         const btn = document.getElementById('btnFinalizar');
         btn.disabled = true; btn.innerText = "ENVIANDO...";
 
+        // Primeiro gera o PDF local
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         doc.setFont("helvetica", "bold");
@@ -205,7 +208,7 @@
         if (!pads.sec.isEmpty()) doc.addImage(pads.sec.toDataURL(), 'PNG', 20, yAss, 40, 15);
         if (!pads.ast.isEmpty()) doc.addImage(pads.ast.toDataURL(), 'PNG', 85, yAss, 40, 15);
         if (!pads.dir.isEmpty()) doc.addImage(pads.dir.toDataURL(), 'PNG', 150, yAss, 40, 15);
-        doc.save(`Meu_Relatorio.pdf`);
+        doc.save(`Relatorio_UMADCIN.pdf`);
 
         const urlScript = "https://script.google.com/macros/s/AKfycbyzp-Ycu3w3WiwBMMH72aHvFybxIMiYpAs644rwj-wB2Ayps7wvMA5woZxCV4RDscpG/exec";
         
@@ -229,9 +232,9 @@
 
         try {
             await fetch(urlScript, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dados) });
-            alert("Sucesso! Relatório enviado para a planilha.");
+            alert("Sucesso! Relatório enviado para o Secretário Geral.");
         } catch (e) {
-            alert("Erro ao salvar dados.");
+            alert("O PDF foi gerado, mas houve um erro ao salvar na planilha.");
         } finally {
             btn.disabled = false; btn.innerText = "GERAR PDF E SALVAR RELATÓRIO";
         }
