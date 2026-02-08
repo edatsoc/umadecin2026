@@ -6,6 +6,7 @@
     <title>UMADCIN - Relatório Digital</title>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
         :root { --azul: #1a3a5a; --fundo: #f4f7f6; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--fundo); padding: 10px; margin: 0; touch-action: manipulation; }
@@ -20,11 +21,12 @@
         .tabela-dados input { width: 70px; text-align: center; border: 1px solid #eee; font-weight: bold; padding: 5px; }
         .assinaturas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; }
         .sig-box { border: 1px solid #ddd; padding: 10px; text-align: center; border-radius: 5px; background: #fafafa; }
-        canvas { width: 100%; height: 150px; border: 1px dashed #ccc; background: white; touch-action: none; cursor: crosshair; }
+        canvas { width: 100%; height: 150px; border: 1px dashed #ccc; background: white; touch-action: none; }
         .img-assinatura { width: 100%; height: 150px; display: none; object-fit: contain; }
         .timestamp { font-size: 10px; color: #d9534f; margin-top: 5px; font-weight: bold; min-height: 14px; }
         .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 18px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 20px; }
         .btn-limpar { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 3px; font-size: 12px; margin-top: 5px; cursor: pointer; }
+        /* Modo visualização */
         .modo-view .btn-gerar, .modo-view .btn-limpar, .modo-view canvas { display: none; }
         .modo-view .img-assinatura { display: block; }
     </style>
@@ -32,7 +34,7 @@
 <body>
 
 <div class="container">
-    <header><h1>UMADCIN</h1><p>RELATÓRIO MENSAL 2</p></header>
+    <header><h1>UMADCIN</h1><p>RELATÓRIO MENSAL</p></header>
 
     <div class="info-topo">
         <div class="field">DATA: <input type="date" id="data_form"></div>
@@ -80,12 +82,16 @@
         tbody.innerHTML += `<tr><td>${l}</td><td style="text-align:right"><input type="number" id="d${i}" value="0"></td></tr>`; 
     });
 
-    // Função para ajustar o Canvas para que o traço siga o dedo corretamente
-    function resizeCanvas(canvas) {
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext("2d").scale(ratio, ratio);
+    // CORREÇÃO DA CANETA: Ajusta o tamanho real do canvas para o DPI da tela
+    function resizeCanvas() {
+        Object.values(pads).forEach(p => {
+            const canvas = p.canvas;
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            p.clear(); // Limpa para evitar distorção no redimensionamento
+        });
     }
 
     const pads = {
@@ -94,8 +100,8 @@
         dir: new SignaturePad(document.getElementById('pad-dir'))
     };
 
-    // Ajustar todos os canvas ao carregar
-    Object.values(pads).forEach(p => resizeCanvas(p.canvas));
+    window.addEventListener("resize", resizeCanvas);
+    setTimeout(resizeCanvas, 500); // Executa após carregar
 
     function registrarHora(id) {
         const ts = document.getElementById('ts-' + id);
@@ -113,6 +119,7 @@
         document.getElementById('ts-' + id).innerText = "";
     }
 
+    // Carregamento de visualização
     window.onload = () => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('view')) {
@@ -136,7 +143,7 @@
         btn.disabled = true; 
         btn.innerText = "ENVIANDO...";
 
-        // 1. GERAR PDF
+        // 1. GERAÇÃO DO PDF
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         doc.setFont("helvetica", "bold");
@@ -158,7 +165,7 @@
 
         doc.save(`Relatorio_UMADCIN.pdf`);
 
-        // 2. ENVIAR PARA PLANILHA
+        // 2. ENVIO PARA O GOOGLE (URL CORRIGIDA)
         const urlScript = "https://script.google.com/macros/s/AKfycbyzp-Ycu3w3WiwBMMH72aHvFybxIMiYpAs644rwj-wB2Ayps7wvMA5woZxCV4RDscpG/exec";
         
         const dados = {
@@ -180,16 +187,15 @@
         };
 
         try {
-            const response = await fetch(urlScript, { 
+            await fetch(urlScript, { 
                 method: 'POST', 
-                mode: 'no-cors', // Mantido para evitar erro de CORS do Google
+                mode: 'no-cors', 
                 cache: 'no-cache',
                 body: JSON.stringify(dados) 
             });
-            alert("Sucesso! Relatório salvo e PDF gerado.");
+            alert("SUCESSO! Relatório enviado e PDF baixado.");
         } catch (e) {
-            console.error(e);
-            alert("O PDF foi gerado, mas houve um erro ao salvar na planilha. Verifique sua conexão.");
+            alert("ERRO: O PDF foi gerado, mas os dados não foram para a planilha.");
         } finally {
             btn.disabled = false; 
             btn.innerText = "GERAR PDF E SALVAR RELATÓRIO";
