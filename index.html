@@ -24,21 +24,20 @@
         .timestamp { font-size: 10px; color: #d9534f; margin-top: 5px; font-weight: bold; min-height: 14px; }
         .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 18px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 20px; }
         .btn-limpar { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 3px; font-size: 12px; margin-top: 5px; cursor: pointer; }
-        
-        /* Estilo para a tela de carregamento do Secretário Geral */
         #view-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--azul); color: white; z-index: 9999; justify-content: center; align-items: center; text-align: center; flex-direction: column; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div id="view-overlay">
     <h2>UMADCIN</h2>
-    <p>Gerando PDF oficial do relatório...</p>
-    <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite;"></div>
+    <p id="status-text">Gerando PDF oficial do relatório...</p>
+    <div id="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite;"></div>
 </div>
 
 <div class="container" id="main-content">
-    <header><h1>UMADCIN</h1><p>RELATÓRIO MENSAL 3.0</p></header>
+    <header><h1>UMADCIN</h1><p>RELATÓRIO MENSAL</p></header>
 
     <div class="info-topo">
         <div class="field">DATA: <input type="date" id="data_form"></div>
@@ -92,12 +91,15 @@
     function resizeCanvas() {
         Object.values(pads).forEach(p => {
             const canvas = p.canvas;
+            if (canvas.offsetParent === null) return;
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            const data = p.toData();
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            p.fromData(data);
+            if (canvas.width !== canvas.offsetWidth * ratio) {
+                const data = p.toData();
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+                p.fromData(data);
+            }
         });
     }
 
@@ -120,15 +122,11 @@
         document.getElementById('ts-' + id).innerText = "";
     }
 
-    // --- LÓGICA AUTOMÁTICA PARA O SECRETÁRIO GERAL ---
     window.onload = async () => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('view')) {
-            // Esconde o formulário e mostra o carregando
             document.getElementById('main-content').style.display = 'none';
             document.getElementById('view-overlay').style.display = 'flex';
-            
-            // Gera o PDF automaticamente com os dados da URL
             await gerarPDFAutomatico(urlParams);
         }
     };
@@ -152,7 +150,6 @@
             y += 10;
         });
 
-        // Adiciona as assinaturas do Drive no PDF
         const yAss = 210;
         const imgs = [params.get('imgSec'), params.get('imgAst'), params.get('imgDir')];
         const cargos = ["SECRETÁRIA LOCAL", "ASSISTENTE MOCIDADE", "DIRIGENTE CONG."];
@@ -162,10 +159,9 @@
         for(let i=0; i<3; i++) {
             if(imgs[i] && imgs[i] !== "Não assinado") {
                 try {
-                    // Carrega a imagem para o PDF sem exibir na tela
                     const img = await carregarImagem(imgs[i]);
                     doc.addImage(img, 'PNG', xPos[i], yAss, 40, 15);
-                } catch(e) {}
+                } catch(e) { console.log("Erro imagem " + i); }
             }
             doc.setFontSize(8);
             doc.text(cargos[i], xPos[i] + 20, yAss + 20, { align: "center" });
@@ -173,12 +169,8 @@
         }
 
         doc.save(`Relatorio_${params.get('cong')}.pdf`);
-        
-        // Após 3 segundos, avisa que o download foi feito
-        setTimeout(() => {
-            document.querySelector('#view-overlay p').innerText = "Download concluído! Você já pode fechar esta aba.";
-            document.querySelector('#view-overlay div').style.display = 'none';
-        }, 3000);
+        document.getElementById('status-text').innerText = "Download concluído! Verifique seus arquivos.";
+        document.getElementById('spinner').style.display = 'none';
     }
 
     function carregarImagem(url) {
@@ -191,17 +183,28 @@
         });
     }
 
-    // --- FUNÇÃO PARA O SECRETÁRIO LOCAL (ENVIO) ---
     async function finalizarTudo() {
         const btn = document.getElementById('btnFinalizar');
         btn.disabled = true; btn.innerText = "ENVIANDO...";
 
-        // Primeiro gera o PDF para o Local também
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.text("Relatório UMADCIN", 20, 20);
-        // (Aqui vai o mesmo código do PDF do Secretary Local que já estava funcionando)
-        doc.save("Meu_Relatorio.pdf");
+        doc.setFont("helvetica", "bold");
+        doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, { align: "center" });
+        doc.setFontSize(10);
+        doc.text(`CONGREGAÇÃO: ${document.getElementById('congregacao').value.toUpperCase()}`, 20, 35);
+        let y = 60;
+        labels.forEach((l, i) => {
+            doc.text(l, 25, y);
+            doc.text(document.getElementById('d'+i).value, 175, y);
+            doc.line(20, y+2, 190, y+2);
+            y += 10;
+        });
+        const yAss = 210;
+        if (!pads.sec.isEmpty()) doc.addImage(pads.sec.toDataURL(), 'PNG', 20, yAss, 40, 15);
+        if (!pads.ast.isEmpty()) doc.addImage(pads.ast.toDataURL(), 'PNG', 85, yAss, 40, 15);
+        if (!pads.dir.isEmpty()) doc.addImage(pads.dir.toDataURL(), 'PNG', 150, yAss, 40, 15);
+        doc.save(`Meu_Relatorio.pdf`);
 
         const urlScript = "https://script.google.com/macros/s/AKfycbyzp-Ycu3w3WiwBMMH72aHvFybxIMiYpAs644rwj-wB2Ayps7wvMA5woZxCV4RDscpG/exec";
         
@@ -217,15 +220,15 @@
                 dir: document.getElementById('ts-dir').innerText
             },
             sigs: {
-                sec: pads.sec.toDataURL(),
-                ast: pads.ast.toDataURL(),
-                dir: pads.dir.toDataURL()
+                sec: pads.sec.isEmpty() ? "" : pads.sec.toDataURL(),
+                ast: pads.ast.isEmpty() ? "" : pads.ast.toDataURL(),
+                dir: pads.dir.isEmpty() ? "" : pads.dir.toDataURL()
             }
         };
 
         try {
             await fetch(urlScript, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dados) });
-            alert("Sucesso! Relatório salvo.");
+            alert("Sucesso! Relatório enviado.");
         } catch (e) {
             alert("Erro ao salvar.");
         } finally {
@@ -233,9 +236,5 @@
         }
     }
 </script>
-
-<style>
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-</style>
 </body>
 </html>
