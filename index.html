@@ -2,37 +2,37 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>UMADCIN - Relatório Digital</title>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root { --azul: #1a3a5a; --fundo: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--fundo); padding: 10px; margin: 0; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--fundo); padding: 10px; margin: 0; touch-action: manipulation; }
         .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-top: 8px solid var(--azul); }
         header { text-align: center; border-bottom: 2px solid var(--azul); margin-bottom: 20px; }
         .info-topo { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .field { display: flex; flex-direction: column; font-weight: bold; color: var(--azul); font-size: 14px; }
-        input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; font-size: 16px; }
         .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         .tabela-dados th { background: var(--azul); color: white; padding: 10px; text-align: left; }
         .tabela-dados td { padding: 10px; border-bottom: 1px solid #eee; }
-        .tabela-dados input { width: 60px; text-align: center; border: 1px solid #eee; font-weight: bold; }
+        .tabela-dados input { width: 70px; text-align: center; border: 1px solid #eee; font-weight: bold; padding: 5px; }
         .assinaturas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; }
         .sig-box { border: 1px solid #ddd; padding: 10px; text-align: center; border-radius: 5px; background: #fafafa; }
-        canvas, .img-assinatura { width: 100%; height: 100px; border: 1px dashed #ccc; background: white; object-fit: contain; }
+        canvas { width: 100%; height: 150px; border: 1px dashed #ccc; background: white; touch-action: none; cursor: crosshair; }
+        .img-assinatura { width: 100%; height: 150px; display: none; object-fit: contain; }
         .timestamp { font-size: 10px; color: #d9534f; margin-top: 5px; font-weight: bold; min-height: 14px; }
-        .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 20px; }
-        .btn-limpar { background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 11px; margin-top: 5px; cursor: pointer; }
+        .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 18px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 20px; }
+        .btn-limpar { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 3px; font-size: 12px; margin-top: 5px; cursor: pointer; }
         .modo-view .btn-gerar, .modo-view .btn-limpar, .modo-view canvas { display: none; }
-        .img-assinatura { display: none; }
         .modo-view .img-assinatura { display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header><h1>UMADCIN</h1><p>RELATÓRIO MENSAL</p></header>
+    <header><h1>UMADCIN</h1><p>RELATÓRIO MENSAL 2</p></header>
 
     <div class="info-topo">
         <div class="field">DATA: <input type="date" id="data_form"></div>
@@ -52,21 +52,21 @@
             <canvas id="pad-sec"></canvas>
             <img id="img-sec" class="img-assinatura">
             <div id="ts-sec" class="timestamp"></div>
-            <button class="btn-limpar" onclick="pads.sec.clear(); document.getElementById('ts-sec').innerText=''">Limpar</button>
+            <button class="btn-limpar" onclick="limparPad('sec')">Limpar</button>
         </div>
         <div class="sig-box">
             <label><strong>ASSISTENTE MOCIDADE</strong></label>
             <canvas id="pad-ast"></canvas>
             <img id="img-ast" class="img-assinatura">
             <div id="ts-ast" class="timestamp"></div>
-            <button class="btn-limpar" onclick="pads.ast.clear(); document.getElementById('ts-ast').innerText=''">Limpar</button>
+            <button class="btn-limpar" onclick="limparPad('ast')">Limpar</button>
         </div>
         <div class="sig-box">
             <label><strong>DIRIGENTE CONG.</strong></label>
             <canvas id="pad-dir"></canvas>
             <img id="img-dir" class="img-assinatura">
             <div id="ts-dir" class="timestamp"></div>
-            <button class="btn-limpar" onclick="pads.dir.clear(); document.getElementById('ts-dir').innerText=''">Limpar</button>
+            <button class="btn-limpar" onclick="limparPad('dir')">Limpar</button>
         </div>
     </div>
 
@@ -80,11 +80,22 @@
         tbody.innerHTML += `<tr><td>${l}</td><td style="text-align:right"><input type="number" id="d${i}" value="0"></td></tr>`; 
     });
 
+    // Função para ajustar o Canvas para que o traço siga o dedo corretamente
+    function resizeCanvas(canvas) {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+    }
+
     const pads = {
         sec: new SignaturePad(document.getElementById('pad-sec')),
         ast: new SignaturePad(document.getElementById('pad-ast')),
         dir: new SignaturePad(document.getElementById('pad-dir'))
     };
+
+    // Ajustar todos os canvas ao carregar
+    Object.values(pads).forEach(p => resizeCanvas(p.canvas));
 
     function registrarHora(id) {
         const ts = document.getElementById('ts-' + id);
@@ -96,6 +107,11 @@
         c.addEventListener('touchend', () => registrarHora(id));
         c.addEventListener('mouseup', () => registrarHora(id));
     });
+
+    function limparPad(id) {
+        pads[id].clear();
+        document.getElementById('ts-' + id).innerText = "";
+    }
 
     window.onload = () => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -117,16 +133,16 @@
 
     async function finalizarTudo() {
         const btn = document.getElementById('btnFinalizar');
-        btn.disabled = true; btn.innerText = "ENVIANDO...";
+        btn.disabled = true; 
+        btn.innerText = "ENVIANDO...";
 
+        // 1. GERAR PDF
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         doc.setFont("helvetica", "bold");
         doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, { align: "center" });
         doc.setFontSize(10);
         doc.text(`CONGREGAÇÃO: ${document.getElementById('congregacao').value.toUpperCase()}`, 20, 35);
-        doc.text(`DATA: ${document.getElementById('data_form').value}`, 20, 42);
-        
         let y = 60;
         labels.forEach((l, i) => {
             doc.text(l, 25, y);
@@ -136,25 +152,13 @@
         });
 
         const yAss = 210;
-        if (!pads.sec.isEmpty()) {
-            doc.addImage(pads.sec.toDataURL(), 'PNG', 20, yAss, 40, 15);
-            doc.text("SECRETÁRIA LOCAL", 40, yAss + 20, { align: "center" });
-            doc.text(document.getElementById('ts-sec').innerText, 40, yAss + 24, { align: "center" });
-        }
-        if (!pads.ast.isEmpty()) {
-            doc.addImage(pads.ast.toDataURL(), 'PNG', 85, yAss, 40, 15);
-            doc.text("ASSISTENTE MOCIDADE", 105, yAss + 20, { align: "center" });
-            doc.text(document.getElementById('ts-ast').innerText, 105, yAss + 24, { align: "center" });
-        }
-        if (!pads.dir.isEmpty()) {
-            doc.addImage(pads.dir.toDataURL(), 'PNG', 150, yAss, 40, 15);
-            doc.text("DIRIGENTE CONG.", 170, yAss + 20, { align: "center" });
-            doc.text(document.getElementById('ts-dir').innerText, 170, yAss + 24, { align: "center" });
-        }
+        if (!pads.sec.isEmpty()) doc.addImage(pads.sec.toDataURL(), 'PNG', 20, yAss, 40, 15);
+        if (!pads.ast.isEmpty()) doc.addImage(pads.ast.toDataURL(), 'PNG', 85, yAss, 40, 15);
+        if (!pads.dir.isEmpty()) doc.addImage(pads.dir.toDataURL(), 'PNG', 150, yAss, 40, 15);
 
         doc.save(`Relatorio_UMADCIN.pdf`);
 
-        // URL fornecida do Apps Script
+        // 2. ENVIAR PARA PLANILHA
         const urlScript = "https://script.google.com/macros/s/AKfycbyzp-Ycu3w3WiwBMMH72aHvFybxIMiYpAs644rwj-wB2Ayps7wvMA5woZxCV4RDscpG/exec";
         
         const dados = {
@@ -176,12 +180,19 @@
         };
 
         try {
-            await fetch(urlScript, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dados) });
-            alert("Sucesso! Relatório enviado e PDF gerado.");
+            const response = await fetch(urlScript, { 
+                method: 'POST', 
+                mode: 'no-cors', // Mantido para evitar erro de CORS do Google
+                cache: 'no-cache',
+                body: JSON.stringify(dados) 
+            });
+            alert("Sucesso! Relatório salvo e PDF gerado.");
         } catch (e) {
-            alert("Houve um erro no envio para a planilha.");
+            console.error(e);
+            alert("O PDF foi gerado, mas houve um erro ao salvar na planilha. Verifique sua conexão.");
         } finally {
-            btn.disabled = false; btn.innerText = "GERAR PDF E SALVAR RELATÓRIO";
+            btn.disabled = false; 
+            btn.innerText = "GERAR PDF E SALVAR RELATÓRIO";
         }
     }
 </script>
