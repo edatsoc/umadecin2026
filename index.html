@@ -119,7 +119,6 @@
         const btn = document.getElementById('btnFinalizar');
         btn.disabled = true; btn.innerText = "ENVIANDO...";
 
-        // --- GERAÇÃO DO PDF ---
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         doc.setFont("helvetica", "bold");
@@ -136,7 +135,6 @@
             y += 10;
         });
 
-        // Assinaturas no PDF (CORRIGIDO: Captura antes de salvar)
         const yAss = 210;
         if (!pads.sec.isEmpty()) {
             doc.addImage(pads.sec.toDataURL(), 'PNG', 20, yAss, 40, 15);
@@ -156,8 +154,7 @@
 
         doc.save(`Relatorio_UMADCIN.pdf`);
 
-        // --- ENVIO DOS DADOS ---
-        // COLE SUA URL DE IMPLANTAÇÃO ABAIXO
+        // URL fornecida do Apps Script
         const urlScript = "https://script.google.com/macros/s/AKfycbyzp-Ycu3w3WiwBMMH72aHvFybxIMiYpAs644rwj-wB2Ayps7wvMA5woZxCV4RDscpG/exec";
         
         const dados = {
@@ -182,7 +179,7 @@
             await fetch(urlScript, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dados) });
             alert("Sucesso! Relatório enviado e PDF gerado.");
         } catch (e) {
-            alert("Houve um erro no envio, mas o PDF foi gerado.");
+            alert("Houve um erro no envio para a planilha.");
         } finally {
             btn.disabled = false; btn.innerText = "GERAR PDF E SALVAR RELATÓRIO";
         }
