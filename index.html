@@ -2,106 +2,221 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UMADCIN - Relatório</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UMADCIN - Relatório Digital</title>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --azul: #1a3a5a; }
-        body { font-family: sans-serif; background: #f4f7f6; padding: 10px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; border-top: 8px solid var(--azul); }
-        canvas { width: 100%; height: 150px; border: 1px dashed #ccc; background: white; }
-        .timestamp { font-size: 10px; color: #d9534f; font-weight: bold; margin-top: 5px; }
-        .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        #view-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: var(--azul); color:white; flex-direction:column; align-items:center; justify-content:center; z-index:99; }
+        :root { --azul: #1a3a5a; --fundo: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--fundo); padding: 10px; margin: 0; touch-action: manipulation; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-top: 8px solid var(--azul); }
+        header { text-align: center; border-bottom: 2px solid var(--azul); margin-bottom: 20px; padding-bottom: 10px; }
+        header h1 { margin: 0; color: var(--azul); font-size: 24px; }
+        header p { margin: 5px 0 0; color: #666; letter-spacing: 2px; font-weight: bold; }
+        
+        .info-topo { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .field { display: flex; flex-direction: column; font-weight: bold; color: var(--azul); font-size: 14px; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; font-size: 16px; }
+        
+        .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .tabela-dados th { background: var(--azul); color: white; padding: 10px; text-align: left; }
+        .tabela-dados td { padding: 10px; border-bottom: 1px solid #eee; }
+        .tabela-dados input { width: 70px; text-align: center; border: 1px solid #eee; font-weight: bold; padding: 5px; }
+        
+        .assinaturas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; }
+        .sig-box { border: 1px solid #ddd; padding: 10px; text-align: center; border-radius: 5px; background: #fafafa; }
+        .sig-box label { display: block; margin-bottom: 10px; color: var(--azul); font-weight: bold; }
+        canvas { width: 100%; height: 150px; border: 1px dashed #ccc; background: white; touch-action: none; }
+        .timestamp { font-size: 10px; color: #d9534f; margin-top: 5px; font-weight: bold; min-height: 14px; }
+        
+        .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 18px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 20px; transition: 0.3s; }
+        .btn-gerar:disabled { background: #ccc; }
+        .btn-limpar { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 3px; font-size: 12px; margin-top: 5px; cursor: pointer; }
+        
+        #view-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--azul); color: white; z-index: 9999; justify-content: center; align-items: center; text-align: center; flex-direction: column; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div id="view-overlay"><h2>UMADCIN</h2><p>Gerando PDF oficial...</p></div>
+<div id="view-overlay">
+    <h1>UMADCIN</h1>
+    <p id="status-text">Gerando PDF oficial do relatório...</p>
+    <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin-top: 20px;"></div>
+</div>
 
 <div class="container" id="main-content">
-    <h2 style="text-align:center; color:var(--azul);">UMADCIN - RELATÓRIO</h2>
-    <div style="display:grid; gap:10px; margin-bottom:20px;">
-        <input type="date" id="data_form">
-        <input type="text" id="congregacao" placeholder="Congregação">
-        <input type="text" id="mes" placeholder="Mês Referência">
+    <header>
+        <h1>UMADCIN</h1>
+        <p>RELATÓRIO MENSAL</p>
+    </header>
+
+    <div class="info-topo">
+        <div class="field">DATA: <input type="date" id="data_form"></div>
+        <div class="field">CONGREGAÇÃO: <input type="text" id="congregacao" placeholder="Ex: Sede"></div>
+        <div class="field">MÊS REFERÊNCIA: <input type="text" id="mes" placeholder="Ex: Janeiro"></div>
     </div>
 
-    <table id="tabela" style="width:100%; border-collapse:collapse; margin-bottom:20px;"></table>
+    <table class="tabela-dados">
+        <thead>
+            <tr>
+                <th>DESCRIÇÃO</th>
+                <th style="text-align:right">QTD</th>
+            </tr>
+        </thead>
+        <tbody id="corpo-tabela">
+            </tbody>
+    </table>
 
-    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
-        <div style="text-align:center;">
-            <label>SEC. LOCAL</label><canvas id="pad-sec"></canvas>
+    <div class="assinaturas-grid">
+        <div class="sig-box">
+            <label>SECRETÁRIA LOCAL</label>
+            <canvas id="pad-sec"></canvas>
             <div id="ts-sec" class="timestamp"></div>
+            <button class="btn-limpar" onclick="limparPad('sec')">Limpar</button>
         </div>
-        <div style="text-align:center;">
-            <label>ASSISTENTE</label><canvas id="pad-ast"></canvas>
+        <div class="sig-box">
+            <label>ASSISTENTE MOCIDADE</label>
+            <canvas id="pad-ast"></canvas>
             <div id="ts-ast" class="timestamp"></div>
+            <button class="btn-limpar" onclick="limparPad('ast')">Limpar</button>
         </div>
-        <div style="text-align:center;">
-            <label>DIRIGENTE</label><canvas id="pad-dir"></canvas>
+        <div class="sig-box">
+            <label>DIRIGENTE CONG.</label>
+            <canvas id="pad-dir"></canvas>
             <div id="ts-dir" class="timestamp"></div>
+            <button class="btn-limpar" onclick="limparPad('dir')">Limpar</button>
         </div>
     </div>
-    <button class="btn-gerar" onclick="finalizarTudo()">GERAR E ENVIAR</button>
+
+    <button class="btn-gerar" id="btnFinalizar" onclick="finalizarTudo()">GERAR PDF E SALVAR RELATÓRIO</button>
 </div>
 
 <script>
-    const labels = ["DECISÕES", "RECONCILIAÇÕES", "CULTOS DE RUA", "COJ", "VISITA", "BATISMO", "EBD", "TRAB. LOCAL", "JOVENS"];
-    const pads = { sec: new SignaturePad(document.getElementById('pad-sec')), ast: new SignaturePad(document.getElementById('pad-ast')), dir: new SignaturePad(document.getElementById('pad-dir')) };
-    
-    labels.forEach((l, i) => {
-        document.getElementById('tabela').innerHTML += `<tr><td style="padding:5px; border-bottom:1px solid #eee">${l}</td><td><input type="number" id="d${i}" value="0" style="width:50px"></td></tr>`;
+    const labels = ["DECISÕES", "RECONCILIAÇÕES", "CULTOS DE RUA", "COJ", "VISITA (NUCLEOS)", "BATISMO ESP. SANTO", "Nº JOVENS EBD", "Nº TRAB. LOCAL", "Nº JOVENS"];
+    const tbody = document.getElementById('corpo-tabela');
+    labels.forEach((l, i) => { 
+        tbody.innerHTML += `<tr><td>${l}</td><td style="text-align:right"><input type="number" id="d${i}" value="0"></td></tr>`; 
     });
+
+    const pads = {
+        sec: new SignaturePad(document.getElementById('pad-sec')),
+        ast: new SignaturePad(document.getElementById('pad-ast')),
+        dir: new SignaturePad(document.getElementById('pad-dir'))
+    };
+
+    // Ajuste de DPI para não bugar assinatura
+    function resizeCanvas() {
+        Object.values(pads).forEach(p => {
+            const canvas = p.canvas;
+            if (canvas.offsetParent === null) return;
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            const data = p.toData();
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            p.fromData(data);
+        });
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    setTimeout(resizeCanvas, 500);
 
     function registrarHora(id) {
-        document.getElementById('ts-' + id).innerText = "Assinado em: " + new Date().toLocaleString('pt-BR');
+        const ts = document.getElementById('ts-' + id);
+        if(ts.innerText === "") {
+            ts.innerText = "Assinado em: " + new Date().toLocaleString('pt-BR');
+        }
     }
+
     ['sec', 'ast', 'dir'].forEach(id => {
-        document.getElementById('pad-'+id).addEventListener('touchend', () => registrarHora(id));
-        document.getElementById('pad-'+id).addEventListener('mouseup', () => registrarHora(id));
+        const c = document.getElementById('pad-' + id);
+        c.addEventListener('touchend', () => registrarHora(id));
+        c.addEventListener('mouseup', () => registrarHora(id));
     });
 
-    async function criarPDF(dados) {
+    function limparPad(id) {
+        pads[id].clear();
+        document.getElementById('ts-' + id).innerText = "";
+    }
+
+    async function criarDocumentoPDF(dados) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.setFontSize(16); doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, {align:"center"});
-        doc.setFontSize(10); doc.text(`CONGREGAÇÃO: ${dados.cong.toUpperCase()}`, 20, 35);
-        doc.text(`MÊS: ${dados.mes.toUpperCase()}`, 20, 42);
         
-        let y = 60;
+        // Cabeçalho
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.setTextColor(26, 58, 90);
+        doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, { align: "center" });
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`CONGREGAÇÃO: ${dados.cong.toUpperCase()}`, 20, 35);
+        doc.text(`MÊS REFERÊNCIA: ${dados.mes.toUpperCase()}`, 20, 42);
+        doc.text(`DATA DO ENVIO: ${dados.dataEnvio || ""}`, 20, 49);
+
+        // Tabela de Dados
+        let y = 65;
+        doc.setFontSize(11);
         labels.forEach((l, i) => {
-            doc.text(l, 25, y); doc.text(String(dados.vals[i]), 170, y);
-            doc.line(20, y+2, 190, y+2); y += 10;
+            doc.setFont("helvetica", "bold");
+            doc.text(l, 25, y);
+            doc.setFont("helvetica", "normal");
+            doc.text(String(dados.vals[i]), 175, y, { align: "right" });
+            doc.setDrawColor(230, 230, 230);
+            doc.line(20, y + 2, 190, y + 2);
+            y += 10;
         });
 
-        // Adiciona assinaturas e as datas (identificações)
+        // Área de Assinaturas
+        const yAss = 210;
         const xPos = [20, 85, 150];
-        const tags = ["SEC. LOCAL", "ASSISTENTE", "DIRIGENTE"];
+        const tags = ["SECRETÁRIA LOCAL", "ASSISTENTE MOCIDADE", "DIRIGENTE CONG."];
         const times = [dados.tSec, dados.tAst, dados.tDir];
         const imgs = [dados.imgSec, dados.imgAst, dados.imgDir];
 
         for(let i=0; i<3; i++) {
-            if(imgs[i] && imgs[i].startsWith("http")) {
-                try {
-                    const img = await new Promise((res, rej) => {
-                        const im = new Image(); im.crossOrigin="anonymous"; im.onload=()=>res(im); im.onerror=rej; im.src=imgs[i];
-                    });
-                    doc.addImage(img, 'PNG', xPos[i], 210, 40, 15);
-                } catch(e) {}
-            } else if (imgs[i] && imgs[i].startsWith("data:")) {
-                doc.addImage(imgs[i], 'PNG', xPos[i], 210, 40, 15);
-            }
+            // Linha da assinatura
+            doc.setDrawColor(0, 0, 0);
+            doc.line(xPos[i], yAss + 15, xPos[i] + 45, yAss + 15);
+            
+            // Texto e Data/Hora
             doc.setFontSize(8);
-            doc.text(tags[i], xPos[i]+20, 230, {align:"center"});
-            doc.text(times[i] || "", xPos[i]+20, 235, {align:"center"});
+            doc.setFont("helvetica", "bold");
+            doc.text(tags[i], xPos[i] + 22.5, yAss + 20, { align: "center" });
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7);
+            doc.setTextColor(150, 0, 0);
+            doc.text(times[i] || "", xPos[i] + 22.5, yAss + 24, { align: "center" });
+            doc.setTextColor(0,0,0);
+
+            // Imagem da Assinatura
+            if(imgs[i] && imgs[i].length > 10) {
+                try {
+                    let imgFinal;
+                    if(imgs[i].startsWith('http')) {
+                        imgFinal = await new Promise((res, rej) => {
+                            const im = new Image(); im.crossOrigin="anonymous";
+                            im.onload=()=>res(im); im.onerror=rej; im.src=imgs[i];
+                        });
+                    } else {
+                        imgFinal = imgs[i];
+                    }
+                    doc.addImage(imgFinal, 'PNG', xPos[i] + 2.5, yAss, 40, 15);
+                } catch(e) { console.error("Erro na imagem", i); }
+            }
         }
         return doc;
     }
 
     async function finalizarTudo() {
+        const btn = document.getElementById('btnFinalizar');
+        btn.disabled = true;
+        btn.innerText = "SALVANDO...";
+
         const dados = {
+            dataEnvio: document.getElementById('data_form').value,
             cong: document.getElementById('congregacao').value,
             mes: document.getElementById('mes').value,
             vals: labels.map((_, i) => document.getElementById('d'+i).value),
@@ -112,31 +227,61 @@
             imgAst: pads.ast.isEmpty() ? "" : pads.ast.toDataURL(),
             imgDir: pads.dir.isEmpty() ? "" : pads.dir.toDataURL()
         };
-        const doc = await criarPDF(dados);
-        doc.save("Relatorio.pdf");
-        
-        fetch("https://script.google.com/macros/s/AKfycbyzp-Ycu3w3WiwBMMH72aHvFybxIMiYpAs644rwj-wB2Ayps7wvMA5woZxCV4RDscpG/exec", {
-            method: 'POST', mode: 'no-cors', body: JSON.stringify({
-                dataEnvio: document.getElementById('data_form').value,
-                cong: dados.cong, mes: dados.mes, valores: dados.vals,
-                times: {sec: dados.tSec, ast: dados.tAst, dir: dados.tDir},
-                sigs: {sec: dados.imgSec, ast: dados.imgAst, dir: dados.imgDir}
-            })
-        });
-        alert("Enviado com sucesso!");
+
+        // Baixa o PDF na hora para o Secretário Local
+        const doc = await criarDocumentoPDF(dados);
+        doc.save(`Relatorio_${dados.cong}_${dados.mes}.pdf`);
+
+        // Envia para a planilha
+        const urlScript = "https://script.google.com/macros/s/AKfycbyzp-Ycu3w3WiwBMMH72aHvFybxIMiYpAs644rwj-wB2Ayps7wvMA5woZxCV4RDscpG/exec";
+        try {
+            await fetch(urlScript, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({
+                    dataEnvio: dados.dataEnvio,
+                    cong: dados.cong,
+                    mes: dados.mes,
+                    valores: dados.vals,
+                    times: { sec: dados.tSec, ast: dados.tAst, dir: dados.tDir },
+                    sigs: { sec: dados.imgSec, ast: dados.imgAst, dir: dados.imgDir }
+                })
+            });
+            alert("Sucesso! Relatório salvo e enviado.");
+        } catch (e) {
+            alert("Erro ao salvar dados online.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "GERAR PDF E SALVAR RELATÓRIO";
+        }
     }
 
+    // Visão do Secretário Geral
     window.onload = async () => {
-        const p = new URLSearchParams(window.location.search);
-        if(p.has('view')) {
+        const params = new URLSearchParams(window.location.search);
+        if(params.has('view')) {
             document.getElementById('main-content').style.display = 'none';
             document.getElementById('view-overlay').style.display = 'flex';
-            const doc = await criarPDF({
-                cong: p.get('cong'), mes: p.get('mes'), vals: p.get('vals').split(','),
-                tSec: p.get('tSec'), tAst: p.get('tAst'), tDir: p.get('tDir'),
-                imgSec: p.get('imgSec'), imgAst: p.get('imgAst'), imgDir: p.get('imgDir')
-            });
-            doc.save("Relatorio_Oficial.pdf");
+            
+            const dados = {
+                cong: params.get('cong'),
+                mes: params.get('mes'),
+                vals: params.get('vals').split(','),
+                tSec: params.get('tSec'),
+                tAst: params.get('tAst'),
+                tDir: params.get('tDir'),
+                imgSec: params.get('imgSec'),
+                imgAst: params.get('imgAst'),
+                imgDir: params.get('imgDir')
+            };
+            
+            const doc = await criarDocumentoPDF(dados);
+            doc.save(`OFICIAL_${dados.cong}_${dados.mes}.pdf`);
+            
+            setTimeout(() => {
+                document.getElementById('status-text').innerText = "Download concluído! Verifique seus arquivos.";
+                document.querySelector('#view-overlay div').style.display = 'none';
+            }, 2000);
         }
     };
 </script>
