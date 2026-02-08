@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UMADCIN - Relatório Digital</title>
+    <title>UMADCIN - Sistema de Relatórios</title>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -11,33 +11,32 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--fundo); margin: 0; padding: 10px; }
         .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; border-top: 10px solid var(--azul); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         header { text-align: center; border-bottom: 2px solid var(--azul); margin-bottom: 20px; padding-bottom: 10px; }
-        h1 { color: var(--azul); margin: 0; font-size: 22px; }
-        .info-topo { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-        .field { flex: 1; min-width: 200px; display: flex; flex-direction: column; font-weight: bold; color: var(--azul); }
-        @media (max-width: 600px) { .field { min-width: 100%; } }
-        input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px; font-size: 16px; }
-        .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+        .field { display: flex; flex-direction: column; font-weight: bold; color: var(--azul); margin-bottom: 10px; flex: 1; min-width: 200px; }
+        .info-topo { display: flex; flex-wrap: wrap; gap: 10px; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px; }
+        .tabela-dados { width: 100%; border-collapse: collapse; margin: 20px 0; }
         .tabela-dados th { background: var(--azul); color: white; padding: 10px; text-align: left; }
         .tabela-dados td { padding: 8px; border-bottom: 1px solid #eee; }
-        .tabela-dados input { width: 70px; float: right; text-align: center; }
-        .assinaturas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 15px; }
-        .sig-box { border: 1px solid #ddd; padding: 10px; background: #fdfdfd; border-radius: 5px; text-align: center; }
-        canvas { width: 100%; height: 120px; border: 1px dashed #aaa; background: white; touch-action: none; margin-bottom: 5px; }
-        .timestamp { font-size: 10px; color: #d9534f; height: 15px; margin-bottom: 5px; font-weight: bold; }
-        .btn-limpar { background: #6c757d; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-        .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 18px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 30px; }
+        .tabela-dados input { width: 80px; float: right; text-align: center; }
+        .sig-box { border: 1px solid #ddd; padding: 10px; text-align: center; border-radius: 5px; background: #fafafa; }
+        canvas { width: 100%; height: 120px; border: 1px dashed #aaa; background: white; touch-action: none; }
+        .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 20px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 20px; }
+        .btn-limpar { background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; margin-top: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header><h1>UMADCIN</h1><p><strong>RELATÓRIO MENSAL</strong></p></header>
+<div class="container" id="app">
+    <header>
+        <img src="https://i.imgur.com/P6v48fX.png" width="80" alt="Logo"> <h1>UMADCIN</h1>
+        <p>RELATÓRIO MENSAL</p>
+    </header>
 
     <div class="info-topo">
         <div class="field">DATA: <input type="date" id="data_form"></div>
         <div class="field">GRUPO: <input type="text" id="grupo"></div>
         <div class="field">CONGREGAÇÃO: <input type="text" id="congregacao"></div>
-        <div class="field">MÊS: <input type="text" id="mes" placeholder="Ex: Fevereiro"></div>
+        <div class="field">MÊS: <input type="text" id="mes"></div>
     </div>
 
     <table class="tabela-dados">
@@ -45,98 +44,92 @@
         <tbody id="corpo-tabela"></tbody>
     </table>
 
-    <div class="assinaturas-grid">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
         <div class="sig-box">
             <label>SECRETÁRIA LOCAL</label>
-            <div id="ts-secretaria" class="timestamp"></div>
-            <canvas id="pad-secretaria"></canvas>
-            <button class="btn-limpar" onclick="limpar('secretaria')">Limpar</button>
+            <div id="ts-sec" style="font-size: 9px; color: red;"></div>
+            <canvas id="pad-sec"></canvas>
+            <button class="btn-limpar" onclick="pads.sec.clear()">Limpar</button>
         </div>
         <div class="sig-box">
-            <label>ASSISTENTE DE MOCIDADE</label>
-            <div id="ts-assistente" class="timestamp"></div>
-            <canvas id="pad-assistente"></canvas>
-            <button class="btn-limpar" onclick="limpar('assistente')">Limpar</button>
+            <label>ASSISTENTE MOCIDADE</label>
+            <div id="ts-ast" style="font-size: 9px; color: red;"></div>
+            <canvas id="pad-ast"></canvas>
+            <button class="btn-limpar" onclick="pads.ast.clear()">Limpar</button>
         </div>
         <div class="sig-box">
-            <label>DIRIGENTE DA CONGREGAÇÃO</label>
-            <div id="ts-dirigente" class="timestamp"></div>
-            <canvas id="pad-dirigente"></canvas>
-            <button class="btn-limpar" onclick="limpar('dirigente')">Limpar</button>
+            <label>DIRIGENTE CONG.</label>
+            <div id="ts-dir" style="font-size: 9px; color: red;"></div>
+            <canvas id="pad-dir"></canvas>
+            <button class="btn-limpar" onclick="pads.dir.clear()">Limpar</button>
         </div>
     </div>
 
-    <button class="btn-gerar" id="btnFinalizar" onclick="finalizarTudo()">GERAR PDF E ENVIAR</button>
+    <button class="btn-gerar" id="btnFinalizar" onclick="finalizarTudo()">FINALIZAR E ENVIAR</button>
 </div>
 
 <script>
-    const labels = ["Decisões", "Reconciliações", "Cultos Rua", "Cultos Cong.", "COJ", "Visita (Núcleos)", "Batismo Esp. Santo", "Jovens EBD", "Trab. Local", "Nº Jovens"];
+    const labels = [
+        "Decisões de jovens", "Reconciliação de Jovens", "Cultos evangelísticos na rua",
+        "Cultos dirigidos na congregação", "Círculo de oração Jovem (COJ)", "Visita aos lares (núcleos)",
+        "Batismo com Espírito Santo", "Nº de jovens na classe EBD",
+        "Nº de trabalhadores da mocidade local", "Nº de jovens matriculados"
+    ];
+
     const tbody = document.getElementById('corpo-tabela');
-    labels.forEach((l, i) => { 
-        tbody.innerHTML += `<tr><td>${l}</td><td><input type="number" id="d${i}" value="0"></td></tr>`; 
+    labels.forEach((l, i) => {
+        tbody.innerHTML += `<tr><td>${l}</td><td><input type="number" id="d${i}" value="0"></td></tr>`;
     });
 
     const pads = {
-        secretaria: new SignaturePad(document.getElementById('pad-secretaria')),
-        assistente: new SignaturePad(document.getElementById('pad-assistente')),
-        dirigente: new SignaturePad(document.getElementById('pad-dirigente'))
+        sec: new SignaturePad(document.getElementById('pad-sec')),
+        ast: new SignaturePad(document.getElementById('pad-ast')),
+        dir: new SignaturePad(document.getElementById('pad-dir'))
     };
 
-    function registrarHora(id) {
-        const ts = document.getElementById('ts-' + id);
-        if(ts.innerText === "") ts.innerText = "Assinado: " + new Date().toLocaleString('pt-BR');
-    }
-
-    Object.keys(pads).forEach(id => {
-        const c = document.getElementById('pad-' + id);
-        c.addEventListener('touchend', () => registrarHora(id));
-        c.addEventListener('mouseup', () => registrarHora(id));
-    });
-
-    function limpar(id) {
-        pads[id].clear();
-        document.getElementById('ts-' + id).innerText = "";
-    }
-
     async function finalizarTudo() {
-        const btn = document.getElementById('btnFinalizar');
-        btn.disabled = true;
-        btn.innerText = "ENVIANDO...";
-
-        // 1. GERAÇÃO DO PDF
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.setFontSize(16);
-        doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, { align: "center" });
-        doc.setFontSize(10);
-        doc.text(`Congregação: ${document.getElementById('congregacao').value}`, 20, 30);
-        doc.save(`Relatorio_${document.getElementById('congregacao').value}.pdf`);
-
-        // 2. ENVIO PARA PLANILHA
-        const urlPlanilha = "https://script.google.com/macros/s/AKfycbyzp-Ycu3w3WiwBMMH72aHvFybxIMiYpAs644rwj-wB2Ayps7wvMA5woZxCV4RDscpG/exec";
         
+        // --- GERAÇÃO DO PDF CORRIGIDA ---
+        doc.setFontSize(18);
+        doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, { align: "center" });
+        
+        doc.setFontSize(12);
+        doc.text(`Congregação: ${document.getElementById('congregacao').value}`, 20, 35);
+        doc.text(`Grupo: ${document.getElementById('grupo').value}`, 20, 42);
+        doc.text(`Mês: ${document.getElementById('mes').value}`, 150, 42);
+        doc.text(`Data: ${document.getElementById('data_form').value}`, 20, 49);
+
+        let y = 65;
+        doc.setFontSize(10);
+        labels.forEach((label, i) => {
+            const valor = document.getElementById('d' + i).value;
+            doc.text(label, 20, y);
+            doc.text(valor, 180, y, { align: "right" });
+            doc.line(20, y+2, 190, y+2); // Linha separadora
+            y += 10;
+        });
+
+        // Assinaturas no PDF
+        if(!pads.sec.isEmpty()) doc.addImage(pads.sec.toDataURL(), 'PNG', 20, 200, 40, 15);
+        if(!pads.ast.isEmpty()) doc.addImage(pads.ast.toDataURL(), 'PNG', 80, 200, 40, 15);
+        if(!pads.dir.isEmpty()) doc.addImage(pads.dir.toDataURL(), 'PNG', 140, 200, 40, 15);
+
+        doc.save("Relatorio_UMADCIN.pdf");
+
+        // --- ENVIO PARA A PLANILHA ---
+        const urlScript = "SEU_LINK_DO_APPS_SCRIPT_AQUI";
         const dados = {
             dataEnvio: document.getElementById('data_form').value,
             grupo: document.getElementById('grupo').value,
             cong: document.getElementById('congregacao').value,
             mes: document.getElementById('mes').value,
-            valores: labels.map((_, i) => document.getElementById('d'+i).value),
-            times: {
-                sec: document.getElementById('ts-secretaria').innerText,
-                ast: document.getElementById('ts-assistente').innerText,
-                dir: document.getElementById('ts-dirigente').innerText
-            }
+            valores: labels.map((_, i) => document.getElementById('d'+i).value)
         };
 
-        try {
-            await fetch(urlPlanilha, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dados) });
-            alert("Sucesso! PDF gerado e dados enviados para a planilha.");
-        } catch (e) {
-            alert("Erro ao enviar para a planilha. Tente novamente.");
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "GERAR PDF E ENVIAR";
-        }
+        fetch(urlScript, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dados) })
+        .then(() => alert("Dados enviados e PDF gerado!"));
     }
 </script>
 </body>
