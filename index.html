@@ -8,34 +8,32 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
-        :root { --azul-uniao: #1a3a5a; --cinza-claro: #f8f9fa; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #e9ecef; margin: 0; padding: 10px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-top: 12px solid var(--azul-uniao); }
+        :root { --azul: #1a3a5a; --fundo: #e9ecef; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--fundo); margin: 0; padding: 10px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-top: 10px solid var(--azul); }
         
-        header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid var(--azul-uniao); padding-bottom: 10px; }
-        h1 { color: var(--azul-uniao); margin: 0; font-size: 24px; }
-        h2 { color: #555; margin: 5px 0; font-size: 18px; }
+        header { text-align: center; border-bottom: 2px solid var(--azul); margin-bottom: 20px; padding-bottom: 10px; }
+        h1 { color: var(--azul); margin: 0; font-size: 22px; text-transform: uppercase; }
 
-        .info-topo { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .field { display: flex; flex-direction: column; font-weight: bold; color: var(--azul-uniao); }
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px; font-size: 16px; }
+        /* Ajuste de Celular: Empilhamento automático */
+        .info-topo { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .field { flex: 1; min-width: 200px; display: flex; flex-direction: column; font-weight: bold; color: var(--azul); }
+        @media (max-width: 600px) { .field { min-width: 100%; } }
 
-        .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-        .tabela-dados th { background: var(--azul-uniao); color: white; padding: 10px; text-align: left; }
-        .tabela-dados td { padding: 8px; border-bottom: 1px solid #dee2e6; }
-        .tabela-dados input { width: 60px; text-align: center; margin: 0; float: right; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; margin-top: 5px; }
 
-        .assinaturas-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media(min-width: 600px) { .assinaturas-grid { grid-template-columns: 1fr 1fr 1fr; } }
+        .tabela-dados { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .tabela-dados th { background: var(--azul); color: white; padding: 10px; }
+        .tabela-dados td { padding: 8px; border-bottom: 1px solid #eee; }
+        .tabela-dados input { width: 70px; float: right; }
+
+        .assinaturas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 15px; }
+        .sig-box { border: 1px solid #ddd; padding: 10px; background: #fdfdfd; border-radius: 5px; text-align: center; }
+        canvas { width: 100%; height: 120px; border: 1px dashed #aaa; background: white; touch-action: none; }
+        .timestamp { font-size: 10px; color: #d9534f; height: 15px; margin: 5px 0; }
         
-        .sig-box { border: 1px solid #ddd; padding: 10px; background: var(--cinza-claro); border-radius: 5px; text-align: center; }
-        .sig-box label { font-size: 11px; font-weight: bold; display: block; margin-bottom: 5px; height: 30px; }
-        canvas { width: 100%; height: 100px; background: white; border: 1px dashed #bbb; touch-action: none; }
-        .timestamp { font-size: 9px; color: #d9534f; margin: 5px 0; min-height: 12px; }
-        
-        .btn-limpar { background: #6c757d; color: white; border: none; padding: 4px 8px; font-size: 10px; border-radius: 3px; cursor: pointer; }
-        .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 18px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-gerar:hover { background: #218838; }
+        .btn-limpar { background: #6c757d; color: white; border: none; padding: 5px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+        .btn-gerar { background: #28a745; color: white; border: none; width: 100%; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 25px; }
     </style>
 </head>
 <body>
@@ -43,170 +41,156 @@
 <div class="container">
     <header>
         <h1>UMADCIN</h1>
-        <h2>RELATÓRIO MENSAL</h2>
+        <p><strong>RELATÓRIO MENSAL</strong> [cite: 1, 3]</p>
     </header>
 
     <div class="info-topo">
-        <div class="field">
-            <label>CONGREGAÇÃO:</label>
-            <input type="text" id="congregacao" placeholder="Ex: Central">
-        </div>
-        <div class="field">
-            <label>GRUPO:</label>
-            <input type="text" id="grupo" placeholder="Ex: G1">
-        </div>
-        <div class="field">
-            <label>MÊS:</label>
-            <select id="mes">
-                <option value="Janeiro">Janeiro</option><option value="Fevereiro">Fevereiro</option>
-                <option value="Março">Março</option><option value="Abril">Abril</option>
-                <option value="Maio">Maio</option><option value="Junho">Junho</option>
-                <option value="Julho">Julho</option><option value="Agosto">Agosto</option>
-                <option value="Setembro">Setembro</option><option value="Outubro">Outubro</option>
-                <option value="Novembro">Novembro</option><option value="Dezembro">Dezembro</option>
-            </select>
-        </div>
+        <div class="field">CONGREGAÇÃO: <input type="text" id="congregacao" oninput="salvarRascunho()"></div> [cite: 2, 4]
+        <div class="field">GRUPO: <input type="text" id="grupo" oninput="salvarRascunho()"></div> [cite: 5, 7]
+        <div class="field">MÊS: <input type="text" id="mes" placeholder="Ex: Janeiro" oninput="salvarRascunho()"></div> [cite: 6, 8]
     </div>
 
     <table class="tabela-dados">
-        <thead>
-            <tr><th>DADOS</th><th>QTD</th></tr>
-        </thead>
-        <tbody>
-            <tr><td>Decisões de jovens</td><td><input type="number" id="d1" value="0"></td></tr>
-            <tr><td>Reconciliação de Jovens</td><td><input type="number" id="d2" value="0"></td></tr>
-            <tr><td>Cultos evangelísticos na rua</td><td><input type="number" id="d3" value="0"></td></tr>
-            <tr><td>Cultos dirigidos na congregação</td><td><input type="number" id="d4" value="0"></td></tr>
-            <tr><td>Círculo de oração Jovem (COJ)</td><td><input type="number" id="d5" value="0"></td></tr>
-            <tr><td>Visita aos lares (núcleos)</td><td><input type="number" id="d6" value="0"></td></tr>
-            <tr><td>Batismo com Espírito Santo</td><td><input type="number" id="d7" value="0"></td></tr>
-            <tr><td>Nº de jovens na classe EBD</td><td><input type="number" id="d8" value="0"></td></tr>
-            <tr><td>Nº de trabalhadores da mocidade local</td><td><input type="number" id="d9" value="0"></td></tr>
-            <tr><td>Nº de jovens matriculados</td><td><input type="number" id="d10" value="0"></td></tr>
-        </tbody>
+        <thead><tr><th>DADOS</th><th>QTD</th></tr></thead> [cite: 9, 10]
+        <tbody id="corpo-tabela">
+            </tbody>
     </table>
 
     <div class="assinaturas-grid">
         <div class="sig-box">
-            <label>SECRETÁRIA LOCAL</label>
+            <label>SECRETÁRIA LOCAL</label> [cite: 14, 18]
             <div id="ts-secretaria" class="timestamp"></div>
             <canvas id="pad-secretaria"></canvas>
             <button class="btn-limpar" onclick="limpar('secretaria')">Limpar</button>
         </div>
         <div class="sig-box">
-            <label>ASSISTENTE DE MOCIDADE</label>
+            <label>ASSISTENTE DE MOCIDADE</label> [cite: 15, 19]
             <div id="ts-assistente" class="timestamp"></div>
             <canvas id="pad-assistente"></canvas>
             <button class="btn-limpar" onclick="limpar('assistente')">Limpar</button>
         </div>
         <div class="sig-box">
-            <label>DIRIGENTE DA CONGREGAÇÃO</label>
+            <label>DIRIGENTE DA CONGREGAÇÃO</label> [cite: 16, 20]
             <div id="ts-dirigente" class="timestamp"></div>
             <canvas id="pad-dirigente"></canvas>
             <button class="btn-limpar" onclick="limpar('dirigente')">Limpar</button>
         </div>
     </div>
 
-    <button class="btn-gerar" onclick="gerarRelatorio()">FINALIZAR E GERAR PDF</button>
+    <button class="btn-gerar" onclick="gerarRelatorio()">GERAR PDF OFICIAL</button>
 </div>
 
 <script>
-    const { jsPDF } = window.jspdf;
+    const labels = [
+        "Decisões de jovens", "Reconciliação de Jovens", "Cultos evangelísticos na rua",
+        "Cultos dirigidos na congregação", "Círculo de oração Jovem (COJ)", "Visita aos lares (núcleos)",
+        "Batismo com Espírito Santo", "Nº de jovens na classe EBD",
+        "Nº de trabalhadores da mocidade local", "Nº de jovens matriculados" [cite: 9, 10]
+    ];
 
-    // Inicialização dos Quadros de Assinatura
+    // Criar linhas da tabela
+    const tbody = document.getElementById('corpo-tabela');
+    labels.forEach((l, i) => {
+        tbody.innerHTML += `<tr><td>${l}</td><td><input type="number" id="d${i}" value="0" oninput="salvarRascunho()"></td></tr>`;
+    });
+
     const pads = {
         secretaria: new SignaturePad(document.getElementById('pad-secretaria')),
         assistente: new SignaturePad(document.getElementById('pad-assistente')),
         dirigente: new SignaturePad(document.getElementById('pad-dirigente'))
     };
 
-    // Registrar hora ao tocar no quadro
-    function registrarHora(id) {
+    // Registrar hora e salvar rascunho
+    function registrarInteracao(id) {
         const ts = document.getElementById('ts-' + id);
         if(ts.innerText === "") {
-            const agora = new Date();
-            ts.innerText = "Assinado em: " + agora.toLocaleString('pt-BR');
+            ts.innerText = "Assinado em: " + new Date().toLocaleString('pt-BR'); [cite: 11, 12, 17]
         }
+        salvarRascunho();
     }
 
-    ['secretaria', 'assistente', 'dirigente'].forEach(id => {
+    Object.keys(pads).forEach(id => {
         const canvas = document.getElementById('pad-' + id);
-        canvas.addEventListener('mousedown', () => registrarHora(id));
-        canvas.addEventListener('touchstart', () => registrarHora(id));
+        canvas.addEventListener('touchend', () => registrarInteracao(id));
+        canvas.addEventListener('mouseup', () => registrarInteracao(id));
     });
 
     function limpar(id) {
         pads[id].clear();
         document.getElementById('ts-' + id).innerText = "";
+        salvarRascunho();
     }
+
+    // FUNÇÃO SALVAR RASCUNHO (LocalStorage)
+    function salvarRascunho() {
+        const dados = {
+            cong: document.getElementById('congregacao').value,
+            grupo: document.getElementById('grupo').value,
+            mes: document.getElementById('mes').value,
+            valores: labels.map((_, i) => document.getElementById('d'+i).value),
+            times: {
+                sec: document.getElementById('ts-secretaria').innerText,
+                ast: document.getElementById('ts-assistente').innerText,
+                dir: document.getElementById('ts-dirigente').innerText
+            }
+        };
+        localStorage.setItem('rascunho_umadcin', JSON.stringify(dados));
+    }
+
+    // CARREGAR RASCUNHO AO ABRIR
+    window.onload = () => {
+        const salvo = JSON.parse(localStorage.getItem('rascunho_umadcin'));
+        if(salvo) {
+            document.getElementById('congregacao').value = salvo.cong;
+            document.getElementById('grupo').value = salvo.grupo;
+            document.getElementById('mes').value = salvo.mes;
+            salvo.valores.forEach((v, i) => document.getElementById('d'+i).value = v);
+            document.getElementById('ts-secretaria').innerText = salvo.times.sec;
+            document.getElementById('ts-assistente').innerText = salvo.times.ast;
+            document.getElementById('ts-dirigente').innerText = salvo.times.dir;
+        }
+    };
 
     async function gerarRelatorio() {
+        const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
-        // Cabeçalho PDF padronizado
+        const dataPreenchimento = new Date().toLocaleString('pt-BR'); [cite: 11, 13]
+
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(18);
-        doc.text("UMADCIN", 105, 20, { align: "center" });
-        doc.setFontSize(14);
-        doc.text("RELATÓRIO MENSAL", 105, 28, { align: "center" });
-
-        doc.setFontSize(11);
-        doc.text(`CONGREGAÇÃO: ${document.getElementById('congregacao').value.toUpperCase()}`, 20, 45);
-        doc.text(`GRUPO: ${document.getElementById('grupo').value.toUpperCase()}`, 20, 52);
-        doc.text(`MÊS: ${document.getElementById('mes').value.toUpperCase()} / 2026`, 140, 52);
-
-        // Tabela
-        doc.setFillColor(26, 58, 90);
-        doc.rect(20, 60, 170, 8, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.text("DADOS", 25, 65);
-        doc.text("QTD", 175, 65);
+        doc.text("UMADCIN - RELATÓRIO MENSAL", 105, 20, { align: "center" }); [cite: 1, 3]
         
-        doc.setTextColor(0, 0, 0);
-        doc.setFont("helvetica", "normal");
-        let y = 75;
-        const itens = [
-            "Decisões de jovens", "Reconciliação de Jovens", "Cultos evangelísticos na rua",
-            "Cultos dirigidos na congregação", "Círculo de oração Jovem (COJ)", "Visita aos lares (núcleos)",
-            "Batismo com Espírito Santo", "Nº de jovens na classe EBD",
-            "Nº de trabalhadores da mocidade local", "Nº de jovens matriculados"
-        ];
-
-        itens.forEach((txt, i) => {
-            doc.text(txt, 25, y);
-            doc.text(document.getElementById('d'+(i+1)).value || "0", 178, y, { align: "right" });
-            doc.setDrawColor(200);
-            doc.line(20, y+2, 190, y+2);
-            y += 9;
-        });
-
-        // Rodapé e Assinaturas
-        y += 15;
         doc.setFontSize(10);
-        doc.text("DATA: ____/____/ 2026", 20, y);
+        doc.text(`CONGREGAÇÃO: ${document.getElementById('congregacao').value}`, 20, 35); [cite: 2, 4]
+        doc.text(`GRUPO: ${document.getElementById('grupo').value}`, 20, 42); [cite: 5, 7]
+        doc.text(`MÊS: ${document.getElementById('mes').value}`, 150, 42); [cite: 6, 8]
+        doc.text(`EMITIDO EM: ${dataPreenchimento}`, 20, 49); [cite: 11, 13]
 
-        y += 25;
-        const positions = [
-            { x: 20, label: "SECRETÁRIA LOCAL", pad: pads.secretaria, ts: 'ts-secretaria' },
-            { x: 80, label: "ASSISTENTE DE MOCIDADE", pad: pads.assistente, ts: 'ts-assistente' },
-            { x: 140, label: "DIRIGENTE CONGREGAÇÃO", pad: pads.dirigente, ts: 'ts-dirigente' }
-        ];
-
-        positions.forEach(pos => {
-            if (!pos.pad.isEmpty()) {
-                doc.addImage(pos.pad.toDataURL(), 'PNG', pos.x, y-12, 40, 12);
-            }
-            doc.line(pos.x, y, pos.x + 50, y);
-            doc.setFontSize(7);
-            doc.text(pos.label, pos.x + 2, y + 4);
-            const tsText = document.getElementById(pos.ts).innerText;
-            if(tsText) doc.text(tsText, pos.x + 2, y + 8);
+        let y = 65;
+        labels.forEach((l, i) => {
+            doc.text(l, 25, y);
+            doc.text(document.getElementById('d'+i).value, 175, y, { align: "right" }); [cite: 9, 10]
+            y += 8;
         });
 
-        doc.save(`Relatorio_UMADCIN_${document.getElementById('congregacao').value}.pdf`);
-        alert("PDF gerado com sucesso!");
+        y += 20;
+        const sigs = [
+            { id: 'secretaria', label: 'SECRETÁRIA LOCAL', x: 20 }, [cite: 14, 18]
+            { id: 'assistente', label: 'ASSISTENTE MOCIDADE', x: 80 }, [cite: 15, 19]
+            { id: 'dirigente', label: 'DIRIGENTE CONGREG.', x: 140 } [cite: 16, 20]
+        ];
+
+        sigs.forEach(s => {
+            if(!pads[s.id].isEmpty()) doc.addImage(pads[s.id].toDataURL(), 'PNG', s.x, y-10, 40, 10);
+            doc.line(s.x, y, s.x+45, y);
+            doc.setFontSize(7);
+            doc.text(s.label, s.x, y+4);
+            doc.text(document.getElementById('ts-'+s.id).innerText, s.x, y+8);
+        });
+
+        doc.save("Relatorio_UMADCIN.pdf");
+        localStorage.removeItem('rascunho_umadcin'); // Limpa rascunho após gerar oficial
+        alert("PDF Gerado! O rascunho foi limpo.");
     }
 </script>
-
 </body>
 </html>
